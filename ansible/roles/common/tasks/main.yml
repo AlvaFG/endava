@@ -1,0 +1,31 @@
+---
+- name: Actualizar cache de paquetes
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Instalar paquetes esenciales
+  apt:
+    name:
+      - htop
+      - curl
+      - vim
+      - git
+      - net-tools
+      - unzip
+      - jq
+      - tmux
+      - wget
+    state: present
+
+- name: Configurar timezone
+  timezone:
+    name: UTC
+
+- name: Crear usuario de administración
+  user:
+    name: "{{ admin_user | default('endava-admin') }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+    create_home: yes

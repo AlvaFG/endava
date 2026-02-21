@@ -1,0 +1,37 @@
+---
+- name: SSH hardening - Deshabilitar login con password
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+  notify: restart sshd
+
+- name: SSH hardening - Deshabilitar login root
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+  notify: restart sshd
+
+- name: Instalar y configurar UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: UFW - Permitir SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: UFW - Permitir Node Exporter
+  ufw:
+    rule: allow
+    port: "9100"
+    proto: tcp
+
+- name: UFW - Activar firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming

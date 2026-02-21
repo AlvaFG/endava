@@ -1,0 +1,77 @@
+---
+- name: Instalar herramientas de Kubernetes
+  hosts: all
+  become: true
+
+  vars:
+    kubectl_version: "1.29.0"
+    helm_version: "3.14.0"
+
+  tasks:
+    - name: Instalar kubectl
+      get_url:
+        url: "https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+
+    - name: Instalar Helm
+      block:
+        - name: Descargar Helm
+          get_url:
+            url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
+            dest: /tmp/helm.tar.gz
+
+        - name: Extraer Helm
+          unarchive:
+            src: /tmp/helm.tar.gz
+            dest: /tmp/
+            remote_src: yes
+
+        - name: Copiar binario Helm
+          copy:
+            src: /tmp/linux-amd64/helm
+            dest: /usr/local/bin/helm
+            mode: "0755"
+            remote_src: yes
+
+        - name: Limpiar archivos temporales
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - /tmp/helm.tar.gz
+            - /tmp/linux-amd64
+
+    - name: Instalar k9s
+      block:
+        - name: Descargar k9s
+          get_url:
+            url: "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
+            dest: /tmp/k9s.tar.gz
+
+        - name: Extraer k9s
+          unarchive:
+            src: /tmp/k9s.tar.gz
+            dest: /usr/local/bin/
+            remote_src: yes
+            extra_opts: [k9s]
+
+        - name: Limpiar
+          file:
+            path: /tmp/k9s.tar.gz
+            state: absent
+
+    - name: Verificar instalaciones
+      command: "{{ item }} version --client --short"
+      register: version_check
+      loop:
+        - kubectl
+        - helm
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Mostrar versiones
+      debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ version_check.results }}"
+      when: item.stdout is defined

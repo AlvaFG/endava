@@ -1,0 +1,37 @@
+{
+  "dashboard": {
+    "title": "Endava Demo App",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(app_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "Request Latency (p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(app_request_latency_seconds_bucket[5m]))",
+            "legendFormat": "p95 {{endpoint}}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(app_requests_total{status=~\"5..\"}[5m])) / sum(rate(app_requests_total[5m])) * 100",
+            "legendFormat": "Error %"
+          }
+        ]
+      }
+    ]
+  }
+}

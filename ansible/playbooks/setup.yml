@@ -1,0 +1,99 @@
+---
+- name: Setup básico de VMs
+  hosts: all
+  become: true
+
+  vars:
+    admin_user: endava-admin
+    essential_packages:
+      - htop
+      - curl
+      - vim
+      - git
+      - net-tools
+      - unzip
+      - jq
+      - tmux
+
+  tasks:
+    - name: Actualizar cache de paquetes
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Actualizar todos los paquetes
+      apt:
+        upgrade: safe
+
+    - name: Instalar paquetes esenciales
+      apt:
+        name: "{{ essential_packages }}"
+        state: present
+
+    - name: Crear usuario de administración
+      user:
+        name: "{{ admin_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        create_home: yes
+
+    - name: Configurar sudo sin password para admin
+      lineinfile:
+        path: /etc/sudoers.d/{{ admin_user }}
+        line: "{{ admin_user }} ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Copiar clave SSH autorizada al usuario admin
+      authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+
+    - name: SSH hardening - Deshabilitar login con password
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication no"
+      notify: restart sshd
+
+    - name: SSH hardening - Deshabilitar login root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PermitRootLogin"
+        line: "PermitRootLogin no"
+      notify: restart sshd
+
+    - name: Instalar y configurar UFW
+      apt:
+        name: ufw
+        state: present
+
+    - name: UFW - Permitir SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: UFW - Permitir Node Exporter
+      ufw:
+        rule: allow
+        port: "9100"
+        proto: tcp
+
+    - name: UFW - Activar firewall
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    - name: Configurar timezone
+      timezone:
+        name: UTC
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted

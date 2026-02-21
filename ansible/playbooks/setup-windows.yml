@@ -1,0 +1,67 @@
+---
+- name: Setup Windows Server
+  hosts: windows
+  gather_facts: yes
+
+  vars:
+    admin_user: endava-admin
+    win_packages:
+      - git
+      - vim
+      - curl
+      - 7zip
+      - python3
+      - notepadplusplus
+
+  tasks:
+    - name: Instalar Chocolatey packages
+      win_chocolatey:
+        name: "{{ win_packages }}"
+        state: present
+
+    - name: Crear usuario de administración
+      win_user:
+        name: "{{ admin_user }}"
+        password: "{{ admin_password }}"
+        groups:
+          - Administrators
+          - Remote Desktop Users
+        state: present
+        password_never_expires: yes
+
+    - name: Habilitar WinRM sobre HTTPS
+      win_shell: |
+        $cert = New-SelfSignedCertificate -DnsName $env:COMPUTERNAME -CertStoreLocation Cert:\LocalMachine\My
+        winrm create winrm/config/Listener?Address=*+Transport=HTTPS "@{Hostname=`"$env:COMPUTERNAME`"; CertificateThumbprint=`"$($cert.Thumbprint)`"}"
+      args:
+        creates: C:\winrm-https-configured.flag
+      ignore_errors: yes
+
+    - name: Configurar Windows Firewall - Permitir WinRM HTTPS
+      win_firewall_rule:
+        name: "WinRM HTTPS"
+        localport: 5986
+        protocol: tcp
+        direction: in
+        action: allow
+        state: present
+
+    - name: Habilitar RDP
+      win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server
+        name: fDenyTSConnections
+        data: 0
+        type: dword
+
+    - name: Instalar Windows Updates (seguridad)
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        reboot: yes
+        reboot_timeout: 600
+      register: update_result
+
+    - name: Mostrar resultado de updates
+      debug:
+        var: update_result.installed_update_count
