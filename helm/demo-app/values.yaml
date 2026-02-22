@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/yourusername/endava-demo
+  repository: ghcr.io/alvafg/endava-demo
   tag: "latest"
   pullPolicy: IfNotPresent
 
