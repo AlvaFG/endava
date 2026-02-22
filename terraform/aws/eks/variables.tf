@@ -11,11 +11,11 @@ variable "cluster_version" {
 }
 
 variable "node_instance_type" {
-  default = "t3.medium"
+  default = "t3.small"
 }
 
 variable "node_desired_size" {
-  default = 2
+  default = 3
 }
 
 variable "node_min_size" {
