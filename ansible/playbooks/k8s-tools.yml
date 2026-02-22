@@ -62,7 +62,7 @@
             state: absent
 
     - name: Verificar instalaciones
-      command: "{{ item }} version --client --short"
+      command: "{{ item }} version --client"
       register: version_check
       loop:
         - kubectl

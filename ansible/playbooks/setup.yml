@@ -21,10 +21,6 @@
         update_cache: yes
         cache_valid_time: 3600
 
-    - name: Actualizar todos los paquetes
-      apt:
-        upgrade: safe
-
     - name: Instalar paquetes esenciales
       apt:
         name: "{{ essential_packages }}"
@@ -50,20 +46,6 @@
       authorized_key:
         user: "{{ admin_user }}"
         key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
-
-    - name: SSH hardening - Deshabilitar login con password
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?PasswordAuthentication"
-        line: "PasswordAuthentication no"
-      notify: restart sshd
-
-    - name: SSH hardening - Deshabilitar login root
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: "^#?PermitRootLogin"
-        line: "PermitRootLogin no"
-      notify: restart sshd
 
     - name: Instalar y configurar UFW
       apt:
@@ -91,6 +73,20 @@
     - name: Configurar timezone
       timezone:
         name: UTC
+
+    - name: SSH hardening - Deshabilitar login con password
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication no"
+      notify: restart sshd
+
+    - name: SSH hardening - Deshabilitar login root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PermitRootLogin"
+        line: "PermitRootLogin no"
+      notify: restart sshd
 
   handlers:
     - name: restart sshd
