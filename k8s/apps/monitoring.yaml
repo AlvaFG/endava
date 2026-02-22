@@ -25,24 +25,8 @@ spec:
           prometheusSpec:
             serviceMonitorSelectorNilUsesHelmValues: false
             additionalScrapeConfigs:
-              - job_name: 'vm-node-exporter'
-                scrape_interval: 30s
-                static_configs:
-                  - targets:
-                      - '44.204.214.31:9100'
-                    labels:
-                      cloud: aws
-                      instance_name: aws-vm
-                  - targets:
-                      - '20.110.132.161:9100'
-                    labels:
-                      cloud: azure
-                      instance_name: azure-vm
-                  - targets:
-                      - '101.44.3.196:9100'
-                    labels:
-                      cloud: huawei
-                      instance_name: huawei-vm
+              name: additional-scrape-configs
+              key: additional-scrape-configs.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
