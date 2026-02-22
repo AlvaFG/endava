@@ -49,7 +49,7 @@ def metrics():
 def root():
     return jsonify({
         "app": "endava-demo",
-        "description": "Platform Engineering Demo - Endava",
+        "description": "Platform Engineering Demo - Endava v2.0",
         "endpoints": ["/health", "/info", "/metrics"],
     })
 
